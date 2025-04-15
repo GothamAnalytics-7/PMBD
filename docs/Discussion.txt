@@ -1,0 +1,31 @@
+```
+- ter linhas por clientes* (recomendação/clustering) - categorias visualizadas + preço médio artigos/quartis (2 colunas)
+- ter linhas por produtos (clustering) - pessoas que viram + adicionaram carrinho + compraram (2/3 colunas)
+
+prep.:
+
+- tratar de omissos (ver pelo id, "brand", tirar)
+- outliers (depende de users com dia inteiro a ver cenas/numero produtos); preço é ignorar (mas ver!)
+- extração da categoria principal (esquerda do 1º ponto do category.code) -> decidir categorias a analisar
+- ver se compra aparece como view e cart também
+
+- tratar horas ??? (talvez não será necessário)
+
+algoritmos:
+
+- selecionar algos (K-Means, etc. -> https://spark.apache.org/docs/latest/ml-clustering.html)
+- ver o da recomendação -> https://www.kaggle.com/code/derinsu/recommendation-engine
+
+
+### Categorias mais populares??? depende do EDA de quantas temos e representatividade
+
+Pipeline (1ª fase):
+    Nos dois métodos:
+    - Correr para 1000/10000 linhas 
+    - Correr para 5% dos dados (funcionou passa para outro)
+    -* Correr para 10% dos dados (se tempo for curto)
+
+        (2ª fase ... maiores porções)
+
+    - Correr para 100% dos dados (na 1ª fase, como garantia)
+```
