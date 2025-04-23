@@ -55,7 +55,9 @@ A componente de _Clustering_ consiste na aplicação de diferentes algoritmos, c
 - Como podemos caracterizar os grupos formados (_clusters_), através das/*da frequência das visualizações e preços dos produtos*/ _features_ a utilizar? É possível observar padrões e grupos coesos?
 - Como varia a complexidade temporal dos algoritmos utilizados, especialmente quando aplicados a subconjuntos de dados com dimensões distintas?
 
-Numa fase seguinte é então desenvolvido um sistema de recomendações simples, como forma de aplicar os resultados do _clustering_ a um contexto prático. Esta componente assume particular importância enquanto forma de dar utilidade do nosso agrupamento, ao permitir a recomendação de produtos a utilizadores com perfis semelhantes.
+//Numa fase seguinte é então desenvolvido um sistema de recomendações simples, como forma de aplicar os resultados do _clustering_ a um contexto prático. Esta componente assume particular importância enquanto forma de dar utilidade do nosso agrupamento, ao permitir a recomendação de produtos a utilizadores com perfis semelhantes.
+
+Numa fase seguinte é então desenvolvido um sistema de recomendações simples com base em similaridade item-item. Embora esta abordagem seja independente do _clustering_, ambas as análises são complementares. Enquanto o _clustering_ ajuda a revelar padrões de consumo e perfis de utilizador, a recomendação foca-se em associar/"agrupar" produtos semelhantes aos já visualizados ou comprados, a partir da co-ocorrência entre itens.
 
 #line(length: 100%)
 
@@ -79,8 +81,9 @@ Para a entrega final ponderamos falar dos seguintes tópicos em cada uma das fas
 = Resultados
 
 - Comentar a formação dos _clusters_;
-- Interpretar a análise de complexidade;
-- (...).
+- Interpretar a análise de complexidade.
+
+Link do GitHub com o desenvolvimento do projeto: 
 
 
 #pagebreak()
