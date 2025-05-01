@@ -35,14 +35,33 @@ def datajoining(spark: SparkSession, data_dir: str, sample_sizes: list):
 
     print(f"Number of rows in total dataset file: {(count:=ec.count())}")
 
+    # partition_per_columns = ["user_id", "user_session"]
+    rows_per_output = 200000
+    # ec = ec.repartition(int(count/rows_per_output)+1, *partition_per_columns)
+    sample_durations = []
     for sample_size in sample_sizes:
         print(f"Starting {sample_size} sample")
         start = time.perf_counter()
         print(f"Number of rows in {sample_size} sample: {(sample_count:=int(count * sample_size))}")
         output_path = dataRaw_dir + f"ec_{sample_size}.parquet"
         if not os.path.exists(output_path):
-            # ec.sample(fraction=sample_size, seed=777).write.format("parquet").mode("overwrite").save(output_path)
-            ec.limit(sample_count).write.format("parquet").mode("overwrite").save(output_path)
+            # ec.sample(fraction=sample_size, seed=777).coalesce(
+            #         int(sample_count/rows_per_output)+1,  # make 1 more partition than needed (np.ceiling)
+            #         # *partition_per_columns,  # does it speed this up?
+            #         ) \
+            #         .write.format("parquet").mode("overwrite").save(output_path)
+            # ec.limit(sample_count).write.partitionedBy(F.partitioning.days("event_time")) \
+            #     .format("parquet").mode("overwrite").save(output_path)
+            #     #.repartition(
+            #     #    int(sample_count/rows_per_output)+1,  # make 1 more partition than needed (np.ceiling)
+            #     #    *partition_per_columns,)  # does it speed this up?
+            # ec.limit(sample_count).write.format("parquet").mode("overwrite").save(output_path)
+            #.coalesce(int(sample_count/rows_per_output)+1) \
+            ec.sample(sample_size, seed=777) \
+                .write.format("parquet").mode("overwrite").save(output_path)
+
         else:
             print("O diretório já existe. Não foi sobrescrito.")
-        print(f"Took {time.perf_counter() - start:.2f} seconds for {sample_size} sample.", end="\n\n")
+        print(f"Took {(sample_duration:=time.perf_counter() - start):.2f} seconds for {sample_size} sample.", end="\n\n")
+        sample_durations.append(sample_duration)
+    return sample_durations

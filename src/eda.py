@@ -7,19 +7,19 @@ from pyspark.sql.types import (
     StringType, LongType, DoubleType, TimestampType
 )
 from pathlib import Path
-from ydata_profiling import ProfileReport
+# from ydata_profiling import ProfileReport
 from pyspark.sql.functions import countDistinct, col, isnan, when, count, split, sum as _sum
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType
 import plotly
 import plotly.express as px
 
 
-def dataprep(spark: SparkSession, data_dir: str):
+def eda(spark: SparkSession, parquet_dir: str):
     # Leitura de dados
-    print(data_dir)
+    print(parquet_dir)
 
     # Converte para spark
-    ec = spark.read.parquet(data_dir)
+    ec = spark.read.parquet(parquet_dir)
 
     # Vizualização da estrutura
     ec.printSchema()
