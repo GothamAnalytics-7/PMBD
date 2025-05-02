@@ -10,6 +10,8 @@ from pathlib import Path
 # from ydata_profiling import ProfileReport
 from pyspark.sql.functions import countDistinct, col, isnan, when, count, split, sum as _sum
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+from pyspark.ml.feature import Bucketizer
+import numpy as np
 import plotly
 import plotly.express as px
 
@@ -45,7 +47,9 @@ def eda(spark: SparkSession, parquet_dir: str):
     print(f"{len(col_ec)} columns:", col_ec)
 
     # Contagem de observações duplicadas
-    print(f'Ecommerce - number of rows is {ec.count()}; after dropDuplicates() applied would be {ec.dropDuplicates().count() }.')
+    # O que é um duplicado? O mesmo utilizador, para o mesmo produto, 
+    # ter o mesmo tipo de evento no mesmo momento
+    print(f'Ecommerce - number of rows is {ec.count()}; after dropDuplicates() applied would be {ec.dropDuplicates(["event_time", "event_type", "product_id", "user_id"]).count() }.')
 
     ec.select(*[
         (
@@ -177,21 +181,25 @@ def eda(spark: SparkSession, parquet_dir: str):
 
 
     # Distribuição dos preços dos produtos (corrigido para não imcluir zeros)
-
     prices_0_table = ec.select("price")
 
     prices_0_table = prices_0_table.withColumn(
         "price_category",
-        when(col("price") == 0, "Zero Price").otherwise("Non-Zero Price")
-    )
-
-    prices_0_table = prices_0_table.toPandas()
+        F.try_divide(F.col("price"), F.col("price"))
+    ).fillna(0, subset=["price_category"]).withColumn("price_category", F.col("price_category").cast(StringType()))
+    max_price = prices_0_table.select(F.max(prices_0_table.price)).first()[0]
+    splits = np.append((np.linspace(0, 1, num=99) * max_price).astype(int), float("inf"))
+    bucket = Bucketizer(inputCol="price", outputCol="price_bucket", splits=splits, handleInvalid="keep"
+                    )
+    prices_0_table = bucket.transform(prices_0_table)
+    prices_grouped = prices_0_table.groupBy(["price_category", "price_bucket"]).count().toPandas().sort_values("price_bucket").reset_index(drop=True)
+    prices_grouped["price_bucket_real"] = prices_grouped["price_bucket"].apply(lambda x: splits[int(x)])
 
     # Create the stacked bar chart
-    fig = px.histogram(
-        prices_0_table, 
-        x='price', 
-        nbins=100, 
+    fig = px.bar(
+        prices_grouped, 
+        x='price_bucket_real', 
+        y="count",
         title='Price Distribution',
         color='price_category',  
         barmode='stack', 
@@ -208,13 +216,14 @@ def eda(spark: SparkSession, parquet_dir: str):
 
 
     # Histograma de tipo de evento por preço de produto
+    ec = bucket.transform(ec)
+    prices_action = ec.groupBy(["price_bucket", "event_type"]).count().toPandas()
+    prices_action["price_bucket_real"] = prices_action["price_bucket"].apply(lambda x: splits[int(x)])
 
-    prices_action = ec.select("price","event_type").toPandas()
-
-    fig = px.histogram(
+    fig = px.bar(
         prices_action,
-        x='price',
-        nbins=100,
+        x='price_bucket_real',
+        y="count",
         title='Price Distribution by Event Type',
         color='event_type',  
         barmode='stack'
@@ -231,12 +240,12 @@ def eda(spark: SparkSession, parquet_dir: str):
 
     # Histograma de tipo de evento por preço de produto
 
-    prices_action_rel = ec.filter(col("event_type") != "view").select("price", "event_type").toPandas()
-
+    # prices_action_rel = ec.filter(col("event_type") != "view").select("price", "event_type").toPandas()
+    prices_action_rel = prices_action[prices_action["event_type"] != "view"]
     fig = px.histogram(
         prices_action_rel,
-        x='price',
-        nbins=100,
+        x='price_bucket_real',
+        y="count",
         title='Price Distribution by Event Type (Excluding views)',
         color='event_type',  
         barmode='stack'

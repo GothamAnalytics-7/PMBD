@@ -57,6 +57,7 @@ def datajoining(spark: SparkSession, data_dir: str, sample_sizes: list):
             #     #    *partition_per_columns,)  # does it speed this up?
             # ec.limit(sample_count).write.format("parquet").mode("overwrite").save(output_path)
             #.coalesce(int(sample_count/rows_per_output)+1) \
+            # .repartition(int(sample_count/rows_per_output)+1) \
             ec.sample(sample_size, seed=777) \
                 .write.format("parquet").mode("overwrite").save(output_path)
 
